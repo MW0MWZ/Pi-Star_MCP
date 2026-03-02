@@ -16,7 +16,7 @@ type Config struct {
 	TLS       TLSConfig
 	Paths     PathsConfig
 	MQTT      MQTTConfig
-	Services  ServicesConfig
+	Services  map[string]*ServiceEntry
 }
 
 // DashboardConfig holds the [dashboard] section.
@@ -62,15 +62,6 @@ type ServiceEntry struct {
 	Enabled    bool
 	BinaryPath string
 	ConfigPath string
-}
-
-// ServicesConfig holds the [services] section.
-type ServicesConfig struct {
-	MMDVMHost   ServiceEntry
-	DMRGateway  ServiceEntry
-	YSFGateway  ServiceEntry
-	P25Gateway  ServiceEntry
-	NXDNGateway ServiceEntry
 }
 
 // Load reads an INI config file and returns a Config with defaults
@@ -134,30 +125,7 @@ func defaults() *Config {
 			FallbackPort:  1884,
 			MosquittoPath: "/usr/sbin/mosquitto",
 		},
-		Services: ServicesConfig{
-			MMDVMHost: ServiceEntry{
-				Enabled:    true,
-				BinaryPath: "/usr/local/bin/MMDVMHost",
-				ConfigPath: "/etc/mmdvmhost/MMDVM.ini",
-			},
-			DMRGateway: ServiceEntry{
-				Enabled:    true,
-				BinaryPath: "/usr/local/bin/DMRGateway",
-				ConfigPath: "/etc/dmrclients/DMRGateway.ini",
-			},
-			YSFGateway: ServiceEntry{
-				BinaryPath: "/usr/local/bin/YSFGateway",
-				ConfigPath: "/etc/ysfclients/YSFGateway.ini",
-			},
-			P25Gateway: ServiceEntry{
-				BinaryPath: "/usr/local/bin/P25Gateway",
-				ConfigPath: "/etc/p25clients/P25Gateway.ini",
-			},
-			NXDNGateway: ServiceEntry{
-				BinaryPath: "/usr/local/bin/NXDNGateway",
-				ConfigPath: "/etc/nxdnclients/NXDNGateway.ini",
-			},
-		},
+		Services: defaultServices(),
 	}
 }
 
@@ -237,12 +205,10 @@ func loadMQTT(f *ini.File, cfg *Config) {
 
 func loadServices(f *ini.File, cfg *Config) {
 	s := f.Section("services")
-
-	loadServiceEntry(s, "mmdvmhost", &cfg.Services.MMDVMHost)
-	loadServiceEntry(s, "dmrgateway", &cfg.Services.DMRGateway)
-	loadServiceEntry(s, "ysfgateway", &cfg.Services.YSFGateway)
-	loadServiceEntry(s, "p25gateway", &cfg.Services.P25Gateway)
-	loadServiceEntry(s, "nxdngateway", &cfg.Services.NXDNGateway)
+	for _, name := range ServiceNames() {
+		entry := cfg.Services[name]
+		loadServiceEntry(s, name, entry)
+	}
 }
 
 func loadServiceEntry(s *ini.Section, prefix string, entry *ServiceEntry) {
@@ -255,6 +221,68 @@ func loadServiceEntry(s *ini.Section, prefix string, entry *ServiceEntry) {
 	if v := s.Key(prefix + "_config").String(); v != "" {
 		entry.ConfigPath = v
 	}
+}
+
+// defaultServices builds the Services map from the registry defaults.
+func defaultServices() map[string]*ServiceEntry {
+	services := make(map[string]*ServiceEntry, len(Registry))
+	for name, def := range Registry {
+		services[name] = &ServiceEntry{
+			Enabled:    def.DefaultEnabled,
+			BinaryPath: def.DefaultBinaryPath,
+			ConfigPath: def.DefaultConfigPath,
+		}
+	}
+	return services
+}
+
+// SaveServices writes the [services] section of the config to the INI
+// file at path, preserving all other sections. Only keys that differ
+// from registry defaults are written.
+func SaveServices(path string, services map[string]*ServiceEntry) error {
+	f, err := ini.Load(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			f = ini.Empty()
+		} else {
+			return fmt.Errorf("load config for save: %w", err)
+		}
+	}
+
+	s := f.Section("services")
+
+	// Clear existing service keys so removed services don't linger.
+	for _, key := range s.Keys() {
+		s.DeleteKey(key.Name())
+	}
+
+	for _, name := range ServiceNames() {
+		entry, ok := services[name]
+		if !ok {
+			continue
+		}
+		def, _ := LookupService(name)
+
+		if entry.Enabled != def.DefaultEnabled {
+			enabledVal := "0"
+			if entry.Enabled {
+				enabledVal = "1"
+			}
+			s.Key(name + "_enabled").SetValue(enabledVal)
+		} else if entry.Enabled {
+			// Always write enabled=1 for enabled services for clarity.
+			s.Key(name + "_enabled").SetValue("1")
+		}
+
+		if entry.BinaryPath != def.DefaultBinaryPath {
+			s.Key(name + "_path").SetValue(entry.BinaryPath)
+		}
+		if entry.ConfigPath != def.DefaultConfigPath {
+			s.Key(name + "_config").SetValue(entry.ConfigPath)
+		}
+	}
+
+	return f.SaveTo(path)
 }
 
 // validate checks that configuration values are within acceptable ranges.
