@@ -6,7 +6,7 @@ Pi-Star MCP replaces the legacy PHP/lighttpd/log-parsing stack with a modern, li
 
 ## What It Does
 
-- **Process Supervisor** — spawns and manages Mosquitto, MMDVMHost, gateways, and bridges as child processes. Monitors health, restarts on crash, handles clean shutdown.
+- **Process Supervisor** — spawns and manages Mosquitto, MMDVMHost, and 20+ gateway/bridge/utility services as child processes. A built-in service registry tracks dependencies and start order. Monitors health, restarts on crash, handles clean shutdown.
 - **HTTPS Dashboard** — serves the web UI over TLS with auto-generated self-signed certificates (or user-supplied certs).
 - **MQTT Relay** — subscribes to MMDVMHost's MQTT topics and relays messages to the browser via WebSocket for real-time updates.
 - **Module System** — dashboard panels are loaded from disk at startup. Community modules can be added without recompiling the binary.
@@ -189,16 +189,22 @@ fallback_port=1884
 mosquitto_path=/usr/sbin/mosquitto
 
 [services]
+# Enable/disable any of the 22 registered services.
+# Only keys that differ from defaults need to be specified.
+# Default binary paths: /usr/local/bin/<binary>
+# Override with <name>_path and <name>_config keys.
 mmdvmhost_enabled=1
-mmdvmhost_path=/usr/local/bin/MMDVMHost
-mmdvmhost_config=/etc/mmdvmhost/MMDVM.ini
 dmrgateway_enabled=1
-dmrgateway_path=/usr/local/bin/DMRGateway
-dmrgateway_config=/etc/dmrclients/DMRGateway.ini
+dmr2ysf_enabled=1
 ysfgateway_enabled=0
 p25gateway_enabled=0
 nxdngateway_enabled=0
+# Path overrides (optional):
+# mmdvmhost_path=/opt/custom/MMDVMHost
+# mmdvmhost_config=/etc/mmdvmhost/MMDVM.ini
 ```
+
+**Supported services:** mmdvmhost, dmrgateway, ysfgateway, p25gateway, nxdngateway, dstargateway, ircddbgateway, fmgateway, aprsgateway, dapnetgateway, dmr2ysf, dmr2nxdn, ysf2dmr, ysf2nxdn, ysf2p25, nxdn2dmr, ysfparrot, p25parrot, nxdnparrot, dstarrepeater, dgidgateway, starnetserver
 
 ## Project Structure
 
@@ -206,7 +212,7 @@ nxdngateway_enabled=0
 Pi-Star_MCP/
 ├── main.go                          # Entry point, CLI flags, startup orchestration
 ├── internal/
-│   ├── config/                      # INI config loading, defaults, validation
+│   ├── config/                      # INI config loading, service registry, dependency management
 │   ├── tlsutil/                     # Self-signed certificate generation
 │   ├── auth/                        # /etc/shadow auth, sessions, CSRF, API tokens
 │   ├── supervisor/                  # Child process lifecycle, Mosquitto management
