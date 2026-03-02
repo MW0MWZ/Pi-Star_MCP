@@ -16,6 +16,8 @@ import (
 	"syscall"
 
 	"github.com/MW0MWZ/Pi-Star_MCP/internal/config"
+	"github.com/MW0MWZ/Pi-Star_MCP/internal/server"
+	"github.com/MW0MWZ/Pi-Star_MCP/internal/tlsutil"
 )
 
 // version is set at build time via -ldflags.
@@ -51,8 +53,11 @@ func main() {
 	defer stop()
 
 	// Step 2: Ensure TLS certificates exist (generate self-signed if needed)
-	// TODO: call tlsutil.EnsureCerts(cfg.TLS)
-	slog.Info("TODO: ensure TLS certificates")
+	if err := tlsutil.EnsureCerts(cfg.TLS.CertFile, cfg.TLS.KeyFile, cfg.TLS.AutoGenerate); err != nil {
+		slog.Error("TLS certificate setup failed", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("TLS certificates ready", "cert", cfg.TLS.CertFile, "key", cfg.TLS.KeyFile)
 
 	// Step 3: Start process supervisor (Mosquitto first, then MMDVM services)
 	// TODO: supervisor.Start(ctx, cfg)
@@ -67,14 +72,27 @@ func main() {
 	slog.Info("TODO: discover modules")
 
 	// Step 6: Start HTTPS server
-	// TODO: server.ListenAndServe(ctx, cfg, ...)
-	slog.Info("TODO: start HTTPS server")
+	serverErr := make(chan error, 1)
+	go func() {
+		serverErr <- server.ListenAndServe(ctx, cfg, content)
+	}()
 
-	slog.Info("startup sequence complete (skeleton)", "listen_https", cfg.Dashboard.ListenHTTPS)
+	slog.Info("startup sequence complete", "listen_https", cfg.Dashboard.ListenHTTPS, "listen_http", cfg.Dashboard.ListenHTTP)
 
-	// Block until shutdown signal
-	<-ctx.Done()
-	slog.Info("shutdown signal received, cleaning up")
+	// Block until shutdown signal or server failure
+	select {
+	case err := <-serverErr:
+		if err != nil {
+			slog.Error("server error", "error", err)
+			os.Exit(1)
+		}
+	case <-ctx.Done():
+		slog.Info("shutdown signal received, cleaning up")
+		// Wait for server graceful shutdown to finish
+		if err := <-serverErr; err != nil {
+			slog.Error("server shutdown error", "error", err)
+		}
+	}
 
 	// TODO: Stop child processes, close connections, drain WebSocket clients
 	slog.Info("shutdown complete")

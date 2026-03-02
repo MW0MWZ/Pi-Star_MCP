@@ -2,3 +2,7 @@
 /pistar-dashboard
 /Pi-Star_MCP
 /build/
+
+# Dev files
+/dev.ini
+/dev-certs/

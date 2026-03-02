@@ -44,17 +44,71 @@ The binary is the **only managed service** on the host. It owns the full lifecyc
 - **MQTT only** — no log file parsing. Real-time data comes from MMDVMHost's MQTT output.
 - **Managed Mosquitto** — always spawns its own broker instance, never conflicts with user-installed Mosquitto.
 
+## Requirements
+
+### Running a Pre-compiled Binary
+
+The dashboard binary is fully statically linked (`CGO_ENABLED=0`) — it has **no shared library dependencies** and runs on both glibc (Debian) and musl (Alpine) without modification.
+
+**Debian / Raspbian / Ubuntu:**
+
+```bash
+# No packages are required for the binary itself.
+# Install managed services as needed:
+apt install mosquitto                # MQTT broker (spawned as child process)
+# MMDVMHost and gateways are installed via pistar-mmdvmhost .deb packages
+```
+
+**Alpine (Pi-Star_OS):**
+
+```bash
+# No packages are required for the binary itself.
+# Install managed services as needed:
+apk add mosquitto                    # MQTT broker (spawned as child process)
+# MMDVMHost and gateways are installed via pistar-mmdvmhost .apk packages
+```
+
+**Common requirements (both distros):**
+
+- Root privileges — needed to bind ports 80/443, read `/etc/shadow` for authentication, and manage child processes
+- Writable filesystem paths (created automatically by the package, or manually):
+  - `/etc/pistar-dashboard/` — config and TLS certificates
+  - `/var/lib/pistar-dashboard/` — persistent data (sessions, backups)
+  - `/var/log/pistar-dashboard/` — audit log
+  - `/run/pistar/` — runtime state (PID files)
+- MMDVMHost and gateway binaries installed separately (for radio functionality)
+- Mosquitto installed separately (the dashboard spawns it as a child process)
+
+### Building from Source
+
+**Debian / Ubuntu:**
+
+```bash
+apt install golang git make
+```
+
+**Alpine:**
+
+```bash
+apk add go git make
+```
+
+**Common requirements:**
+
+- Go 1.23+
+- git — for version string injection via `git describe`
+- make — optional, you can call `go build` directly
+- No C compiler or C libraries needed (`CGO_ENABLED=0`)
+
 ## Building
-
-### Prerequisites
-
-- Go 1.22+
 
 ### Development Build (native)
 
 ```bash
 make build
 ```
+
+Produces `./pistar-dashboard` for your host platform.
 
 ### Cross-Compile for Linux Targets
 
@@ -67,7 +121,28 @@ make all            # All three targets
 
 Binaries are written to `build/` with version injected from `git describe`.
 
-All targets produce fully static binaries (~2-3 MB stripped, ~10-12 MB with full deps).
+All targets produce fully static binaries (`CGO_ENABLED=0`, stripped with `-s -w`).
+
+### Development Server
+
+To run locally on non-privileged ports, create a `dev.ini`:
+
+```ini
+[dashboard]
+listen_http  = :8080
+listen_https = :8443
+
+[tls]
+cert_file     = dev-certs/server.crt
+key_file      = dev-certs/server.key
+auto_generate = 1
+```
+
+```bash
+go run . --config dev.ini
+# Dashboard at https://localhost:8443 (self-signed cert, accept the warning)
+# HTTP requests to http://localhost:8080 redirect to HTTPS
+```
 
 ### Clean
 
