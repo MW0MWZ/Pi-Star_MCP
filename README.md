@@ -39,6 +39,7 @@ The binary is the **only managed service** on the host. It owns the full lifecyc
 ### Key Design Decisions
 
 - **Single static binary** — `CGO_ENABLED=0`, no libc dependency, runs on both glibc (Debian) and musl (Alpine/Pi-Star_OS)
+- **Embedded assets** — all web templates, static files, built-in modules, themes, and i18n files are compiled into the binary via Go's `embed.FS`. There are no user-editable files on disk for the web root — changes require recompiling.
 - **Standard paths** — config lives in `/etc/`, persistent data in `/var/lib/`, ephemeral state in `/run/`. No awareness of Pi-Star_OS bind-mounts needed.
 - **MQTT only** — no log file parsing. Real-time data comes from MMDVMHost's MQTT output.
 - **Managed Mosquitto** — always spawns its own broker instance, never conflicts with user-installed Mosquitto.
