@@ -1,0 +1,16 @@
+/* core module styles */
+.core-stats dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.core-stats dt {
+    font-weight: 500;
+    color: var(--ps-text-secondary, #6c757d);
+}
+
+.core-stats dd {
+    font-variant-numeric: tabular-nums;
+}

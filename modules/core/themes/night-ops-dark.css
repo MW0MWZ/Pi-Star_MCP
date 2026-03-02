@@ -1,0 +1,21 @@
+:root[data-theme="night-ops-dark"] {
+  --ps-bg-primary: #0a0a0a;
+  --ps-bg-secondary: #1a0a0a;
+  --ps-bg-tertiary: #2a1010;
+  --ps-border: #3a1515;
+  --ps-text-primary: #cc4444;
+  --ps-text-secondary: #882222;
+  --ps-text-inverse: #0a0a0a;
+  --ps-accent: #cc2222;
+  --ps-accent-hover: #ee3333;
+  --ps-accent-subtle: #1a0808;
+  --ps-success: #884422;
+  --ps-warning: #cc6600;
+  --ps-danger: #ff2222;
+  --ps-info: #993333;
+  --ps-nav-bg: #050505;
+  --ps-nav-text: #cc4444;
+  --ps-input-bg: #1a0a0a;
+  --ps-input-border: #3a1515;
+  --ps-table-header-bg: #2a1010;
+}

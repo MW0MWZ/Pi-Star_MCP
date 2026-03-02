@@ -1,0 +1,190 @@
+/* components.css — Nav, cards, tables, forms, buttons, focus styles */
+
+/* Navigation */
+header[role="banner"] {
+    background-color: var(--ps-nav-bg, #1a1a2e);
+    color: var(--ps-nav-text, #ffffff);
+    padding: 0 1rem;
+}
+
+nav[role="navigation"] {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    max-width: 80rem;
+    margin: 0 auto;
+    min-height: 3.5rem;
+}
+
+.nav-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: inherit;
+    text-decoration: none;
+}
+
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+#nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+#nav-menu a {
+    color: inherit;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+#nav-menu a:hover,
+#nav-menu a[aria-current="page"] {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Mobile navigation */
+@media (max-width: 575px) {
+    .nav-toggle { display: block; }
+    #nav-menu {
+        display: none;
+        flex-basis: 100%;
+        flex-direction: column;
+    }
+    #nav-menu.open { display: flex; }
+}
+
+/* Cards / Panels */
+.card {
+    background-color: var(--ps-bg-secondary, #f8f9fa);
+    border: 1px solid var(--ps-border, #dee2e6);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.card h2 {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background-color: var(--ps-table-header-bg, #e9ecef);
+}
+
+th, td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--ps-border, #dee2e6);
+}
+
+th {
+    font-weight: 600;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--ps-input-border, #ced4da);
+    border-radius: 0.25rem;
+    background-color: var(--ps-input-bg, #ffffff);
+    color: var(--ps-text-primary, #1a1a1a);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--ps-accent, #0066cc);
+}
+
+input[aria-invalid="true"] {
+    border-color: var(--ps-danger, #dc3545);
+}
+
+.error-message {
+    color: var(--ps-danger, #dc3545);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Buttons */
+button,
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    background-color: var(--ps-accent, #0066cc);
+    color: var(--ps-text-inverse, #ffffff);
+    text-decoration: none;
+}
+
+button:hover,
+.btn:hover {
+    background-color: var(--ps-accent-hover, #0052a3);
+}
+
+/* Status indicators */
+.status-running { color: var(--ps-success, #28a745); }
+.status-stopped { color: var(--ps-text-secondary, #6c757d); }
+.status-crashed { color: var(--ps-danger, #dc3545); }
+
+/* Login page */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 24rem;
+    padding: 2rem;
+}
+
+.login-container h1 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}

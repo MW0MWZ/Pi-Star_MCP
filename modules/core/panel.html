@@ -1,0 +1,31 @@
+<section class="card" aria-labelledby="core-heading">
+    <h2 id="core-heading" data-i18n="core.title">System Info</h2>
+    <div class="core-stats" aria-live="polite">
+        <dl>
+            <dt data-i18n="core.cpu_temp">CPU Temperature</dt>
+            <dd id="core-cpu-temp">--</dd>
+
+            <dt data-i18n="core.cpu_load">CPU Load</dt>
+            <dd id="core-cpu-load">--</dd>
+
+            <dt data-i18n="core.uptime">Uptime</dt>
+            <dd id="core-uptime">--</dd>
+
+            <dt data-i18n="core.memory">Memory</dt>
+            <dd id="core-memory">--</dd>
+        </dl>
+    </div>
+    <h3 data-i18n="core.services">Services</h3>
+    <table>
+        <caption class="sr-only" data-i18n="core.services_caption">Managed service statuses</caption>
+        <thead>
+            <tr>
+                <th scope="col" data-i18n="core.service_name">Service</th>
+                <th scope="col" data-i18n="core.service_status">Status</th>
+            </tr>
+        </thead>
+        <tbody id="core-services">
+            <!-- Populated by panel.js -->
+        </tbody>
+    </table>
+</section>

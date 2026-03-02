@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default-light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-i18n="login.title">Pi-Star - Log In</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+</head>
+<body class="login-page">
+    <main role="main" class="login-container">
+        <h1 data-i18n="nav.title">Pi-Star</h1>
+        <form method="post" action="/login" novalidate>
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="username" data-i18n="login.username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username"
+                       data-validate="required" data-label="Username">
+            </div>
+            <div class="form-group">
+                <label for="password" data-i18n="login.password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password"
+                       data-validate="required" data-label="Password">
+            </div>
+            <button type="submit" data-i18n="login.submit">Log In</button>
+            <div aria-live="polite" id="login-error" class="error-message" role="alert"></div>
+        </form>
+    </main>
+    <script src="/static/js/validate.js"></script>
+</body>
+</html>

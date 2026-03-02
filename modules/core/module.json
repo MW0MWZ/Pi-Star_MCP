@@ -1,0 +1,19 @@
+{
+  "name": "core",
+  "displayName": "System Info",
+  "version": "1.0.0",
+  "type": "panel",
+  "description": "Core system information: CPU temperature, load, uptime, and managed service statuses",
+  "author": "Pi-Star Team",
+  "menu": {
+    "label": "Dashboard",
+    "icon": "dashboard",
+    "order": 1
+  },
+  "mqttTopics": [
+    "mmdvm/display/#"
+  ],
+  "entryPoint": "panel.html",
+  "scripts": ["panel.js"],
+  "styles": ["style.css"]
+}

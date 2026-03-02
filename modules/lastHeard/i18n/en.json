@@ -1,0 +1,12 @@
+{
+  "lastHeard.title": "Last Heard",
+  "lastHeard.caption": "Recent RF and network activity",
+  "lastHeard.callsign": "Callsign",
+  "lastHeard.mode": "Mode",
+  "lastHeard.target": "Target",
+  "lastHeard.source": "Source",
+  "lastHeard.duration": "Duration",
+  "lastHeard.loss": "Loss",
+  "lastHeard.ber": "BER",
+  "lastHeard.time": "Time"
+}

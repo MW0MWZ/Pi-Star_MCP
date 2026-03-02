@@ -1,0 +1,20 @@
+{
+  "name": "lastHeard",
+  "displayName": "Last Heard",
+  "version": "1.0.0",
+  "type": "panel",
+  "description": "Displays recent RF and network activity",
+  "author": "Pi-Star Team",
+  "menu": {
+    "label": "Last Heard",
+    "icon": "radio",
+    "order": 10
+  },
+  "mqttTopics": [
+    "mmdvm/display/#",
+    "mmdvm/log/#"
+  ],
+  "entryPoint": "panel.html",
+  "scripts": ["panel.js"],
+  "styles": ["style.css"]
+}

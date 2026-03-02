@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default-light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-i18n="nav.title">Pi-Star Dashboard</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <!-- Theme CSS injected server-side based on user preference -->
+    <script>
+        // Inline: apply theme from data attribute before paint to avoid flash
+        (function() {
+            var theme = document.documentElement.getAttribute('data-theme');
+            if (!theme) document.documentElement.setAttribute('data-theme', 'default-light');
+        })();
+    </script>
+</head>
+<body>
+    <header role="banner">
+        <nav role="navigation" aria-label="Main navigation">
+            <a href="/" class="nav-brand" data-i18n="nav.title">Pi-Star</a>
+            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-menu">
+                <span class="nav-toggle-icon"></span>
+            </button>
+            <ul id="nav-menu" role="menubar">
+                <!-- Module navigation items injected server-side -->
+            </ul>
+            <div class="nav-actions">
+                <select id="theme-picker" aria-label="Theme">
+                    <option value="default-light" data-i18n="theme.light">Light</option>
+                    <option value="default-dark" data-i18n="theme.dark">Dark</option>
+                </select>
+                <select id="lang-picker" aria-label="Language">
+                    <option value="en">English</option>
+                </select>
+                <a href="/logout" data-i18n="nav.logout">Log Out</a>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" id="dashboard">
+        <!-- Panel modules injected server-side as <section> elements -->
+        <div aria-live="polite" id="status-region" class="sr-only"></div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>Pi-Star v5</p>
+    </footer>
+
+    <script src="/static/js/pistar.js"></script>
+    <script src="/static/js/validate.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+/* lastHeard module styles */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#lh-table td {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Mode colour classes — derived from theme variables */
+.lh-mode-dmr   { color: var(--ps-accent, #0066cc); }
+.lh-mode-dstar { color: var(--ps-info, #17a2b8); }
+.lh-mode-ysf   { color: var(--ps-success, #28a745); }
+.lh-mode-p25   { color: var(--ps-warning, #ffc107); }
+.lh-mode-nxdn  { color: var(--ps-danger, #dc3545); }
+.lh-mode-m17   { color: var(--ps-accent, #0066cc); }
+.lh-mode-fm    { color: var(--ps-text-secondary, #6c757d); }

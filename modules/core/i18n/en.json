@@ -1,0 +1,15 @@
+{
+  "core.title": "System Info",
+  "core.cpu_temp": "CPU Temperature",
+  "core.cpu_load": "CPU Load",
+  "core.uptime": "Uptime",
+  "core.memory": "Memory",
+  "core.services": "Services",
+  "core.services_caption": "Managed service statuses",
+  "core.service_name": "Service",
+  "core.service_status": "Status",
+  "core.service.running": "Running",
+  "core.service.stopped": "Stopped",
+  "core.service.crashed": "Crashed",
+  "core.service.restarting": "Restarting"
+}

@@ -1,0 +1,35 @@
+{
+  "nav.title": "Pi-Star",
+  "nav.dashboard": "Dashboard",
+  "nav.config": "Configuration",
+  "nav.logout": "Log Out",
+
+  "login.title": "Pi-Star - Log In",
+  "login.username": "Username",
+  "login.password": "Password",
+  "login.submit": "Log In",
+  "login.failed": "Invalid username or password",
+
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.auto": "Auto",
+
+  "theme.default": "Default",
+  "theme.classic": "Classic",
+  "theme.night-ops": "Night Ops",
+  "theme.high-contrast": "High Contrast",
+  "theme.midnight": "Midnight",
+  "theme.emerald": "Emerald",
+
+  "validation.required": "{label} is required",
+  "validation.numeric": "{label} must be a whole number",
+  "validation.decimal": "{label} must be a number",
+  "validation.range": "{label} must be between {min} and {max}",
+  "validation.minlen": "{label} must be at least {n} characters",
+  "validation.maxlen": "{label} must be at most {n} characters",
+  "validation.pattern": "{label} format is invalid",
+  "validation.callsign": "{label} must be a valid callsign",
+  "validation.ip": "{label} must be a valid IP address",
+  "validation.port": "{label} must be a valid port (1-65535)",
+  "validation.hostname": "{label} must be a valid hostname"
+}

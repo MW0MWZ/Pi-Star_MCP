@@ -1,0 +1,21 @@
+:root[data-theme="default-dark"] {
+  --ps-bg-primary: #1a1a1a;
+  --ps-bg-secondary: #2d2d2d;
+  --ps-bg-tertiary: #3a3a3a;
+  --ps-border: #495057;
+  --ps-text-primary: #e9ecef;
+  --ps-text-secondary: #adb5bd;
+  --ps-text-inverse: #ffffff;
+  --ps-accent: #6ea8fe;
+  --ps-accent-hover: #8bb9fe;
+  --ps-accent-subtle: #1a2a3a;
+  --ps-success: #75b798;
+  --ps-warning: #ffda6a;
+  --ps-danger: #ea868f;
+  --ps-info: #6edff6;
+  --ps-nav-bg: #111111;
+  --ps-nav-text: #e9ecef;
+  --ps-input-bg: #2d2d2d;
+  --ps-input-border: #495057;
+  --ps-table-header-bg: #3a3a3a;
+}
