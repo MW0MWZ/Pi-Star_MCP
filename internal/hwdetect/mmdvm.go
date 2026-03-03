@@ -211,8 +211,8 @@ func parseMMDVMResponse(data []byte) (*MMDVMProbeResult, error) {
 			desc = trimNul(data[4:frameLen])
 		}
 	case 2:
-		// Proto v2: 4 bytes capabilities + 16 bytes UDID, description at offset 24
-		const descOffset = 4 + 4 + 16
+		// Proto v2: 3 bytes (2 caps + 1 cpu) + 16 bytes UDID, description at offset 23
+		const descOffset = 4 + 3 + 16
 		if frameLen > descOffset {
 			desc = trimNul(data[descOffset:frameLen])
 		}

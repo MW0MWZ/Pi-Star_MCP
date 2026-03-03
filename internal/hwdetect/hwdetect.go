@@ -38,6 +38,7 @@ type DetectedDevice struct {
 	MMDVMProtocol      int        `json:"mmdvmProtocol,omitempty"`
 	NextionModel       string     `json:"nextionModel,omitempty"`
 	NextionSerial      string     `json:"nextionSerial,omitempty"`
+	NextionBaud        baudRate   `json:"-"`
 	DVMegaFirmware     string     `json:"dvmegaFirmware,omitempty"`
 	DVMegaHardware     string     `json:"dvmegaHardware,omitempty"`
 }
@@ -57,6 +58,9 @@ var knownUSBDevices = map[string]struct {
 
 // DetectAll enumerates serial ports and probes each one.
 func DetectAll() []DetectedDevice {
+	// Ensure USB serial drivers are loaded (Alpine/mdev doesn't autoload)
+	loadUSBDrivers()
+
 	// Reset GPIO-connected modems (MMDVM_HS hats, DV-Mega on GPIO)
 	// before any probing, matching pistar-findmodem.
 	resetGPIOModem()
@@ -127,6 +131,7 @@ func DetectAll() []DetectedDevice {
 			dev.DeviceType = DeviceNextion
 			dev.NextionModel = nextion.Model
 			dev.NextionSerial = nextion.Serial
+			dev.NextionBaud = nextion.BaudRate
 			devices = append(devices, dev)
 			continue
 		}

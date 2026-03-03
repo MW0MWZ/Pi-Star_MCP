@@ -75,6 +75,8 @@ func main() {
 		slog.Info("detected i2c device", attrs...)
 	}
 	hwdetect.InitLCD(i2cDevices)
+	hwdetect.InitOLED(i2cDevices)
+	hwdetect.InitNextion(devices)
 
 	// Step 4: Start process supervisor (Mosquitto first, then MMDVM services)
 	// TODO: supervisor.Start(ctx, cfg)

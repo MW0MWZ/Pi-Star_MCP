@@ -2,6 +2,8 @@ package hwdetect
 
 import (
 	"fmt"
+	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,9 +16,10 @@ const (
 
 // NextionProbeResult holds parsed info from a Nextion "connect" response.
 type NextionProbeResult struct {
-	Model  string // e.g. "NX4832K035_011R"
-	Serial string // device serial number
-	Raw    string // full comok response line
+	Model    string   // e.g. "NX4832K035_011R"
+	Serial   string   // device serial number
+	Raw      string   // full comok response line
+	BaudRate baudRate // baud rate that worked during detection
 }
 
 // ProbeNextion sends the Nextion "connect" command at each baud rate and
@@ -28,6 +31,7 @@ func ProbeNextion(port string) (*NextionProbeResult, error) {
 			return nil, err
 		}
 		if result != nil {
+			result.BaudRate = baud
 			return result, nil
 		}
 	}
@@ -127,4 +131,76 @@ func parseNextionResponse(data []byte) (*NextionProbeResult, error) {
 	}
 
 	return result, nil
+}
+
+// MMDVM serial passthrough command type.
+const mmdvmSerial = 0x80
+
+// nextionMakeCmd builds a Nextion command string with the 0xFF 0xFF 0xFF terminator.
+func nextionMakeCmd(cmd string) []byte {
+	buf := []byte(cmd)
+	buf = append(buf, 0xFF, 0xFF, 0xFF)
+	return buf
+}
+
+// nextionWrapMMDVM wraps a Nextion command in an MMDVM serial frame.
+// Frame: [0xE0] [length] [0x80] [nextion data...]
+func nextionWrapMMDVM(nextionCmd []byte) []byte {
+	frameLen := len(nextionCmd) + 3
+	buf := make([]byte, 0, frameLen)
+	buf = append(buf, 0xE0, byte(frameLen), mmdvmSerial)
+	buf = append(buf, nextionCmd...)
+	return buf
+}
+
+// nextionSend sends a Nextion command, using the MMDVM serial wrapper for
+// GPIO-attached displays (ttyAMA*) and raw commands for USB (ttyUSB*).
+func nextionSend(fd int, cmd string, wrapMMDVM bool) {
+	raw := nextionMakeCmd(cmd)
+	if wrapMMDVM {
+		raw = nextionWrapMMDVM(raw)
+	}
+	unix.Write(fd, raw)
+}
+
+// nextionSetText sends a text value to a Nextion field.
+func nextionSetText(fd int, field, value string, wrapMMDVM bool) {
+	nextionSend(fd, fmt.Sprintf("%s.txt=\"%s\"", field, value), wrapMMDVM)
+}
+
+// InitNextion finds any detected Nextion displays and shows a startup message.
+func InitNextion(devices []DetectedDevice) {
+	for _, dev := range devices {
+		if dev.DeviceType != DeviceNextion {
+			continue
+		}
+
+		baud := dev.NextionBaud
+		if baud == 0 {
+			baud = unix.B9600 // Nextion factory default
+		}
+
+		fd, err := openSerialPort(dev.Port, baud)
+		if err != nil {
+			continue
+		}
+
+		// GPIO-attached Nextions (ttyAMA*) go through the MMDVM firmware's
+		// serial passthrough; USB-attached ones speak raw Nextion protocol.
+		wrap := !strings.HasPrefix(filepath.Base(dev.Port), "ttyUSB")
+
+		// Clear all standard fields
+		for _, field := range []string{"t0", "t1", "t2", "t5", "t20", "t30", "t31", "t32"} {
+			nextionSetText(fd, field, "", wrap)
+		}
+
+		// Display startup message
+		nextionSetText(fd, "t0", "Nextion Detected", wrap)
+		nextionSetText(fd, "t2", "Pi-Star MCP", wrap)
+		nextionSend(fd, "ref 0", wrap)
+
+		unix.Close(fd)
+
+		slog.Info("nextion startup message displayed", "port", dev.Port, "model", dev.NextionModel)
+	}
 }
