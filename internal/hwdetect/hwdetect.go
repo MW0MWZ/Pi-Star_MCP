@@ -136,6 +136,14 @@ func DetectAll() []DetectedDevice {
 		devices = append(devices, dev)
 	}
 
+	// Reset all detected USB serial devices so they're in a clean state
+	// for the actual services (MMDVMHost, DStarRepeater, etc.) to use.
+	for _, dev := range devices {
+		if strings.HasPrefix(filepath.Base(dev.Port), "ttyUSB") {
+			resetDTR(dev.Port)
+		}
+	}
+
 	return devices
 }
 
