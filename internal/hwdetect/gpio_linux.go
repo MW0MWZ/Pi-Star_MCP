@@ -45,34 +45,36 @@ func resetGPIOModem() {
 	slog.Debug("gpio modem reset complete", "pin20", pin20, "pin21", pin21)
 }
 
-// gpioChipBase finds the GPIO chip base number, handling Pi 5 (gpiochip4
-// at base 504, mapped to 0) and older Pi boards.
+// gpioChipBase returns the sysfs GPIO number base for the main BCM GPIO controller.
+// On older kernels (Pi 3/4 with older DT) this is 0; on newer kernels the chip
+// may be at 512 (Pi 4 with pinctrl-bcm2711) or 504 (Pi 5 with pinctrl-rp1).
+// We read the "label" file of each gpiochip to find the main pinctrl-bcm* or
+// pinctrl-rp1 controller, then read its "base" file.
 func gpioChipBase() int {
 	matches, _ := filepath.Glob("/sys/class/gpio/gpiochip*")
 	for _, m := range matches {
-		// Look for the main GPIO controller (contains "0000.gpio" in the link target)
-		target, err := os.Readlink(m)
-		if err != nil {
-			continue
-		}
-		if !strings.Contains(target, "0000.gpio") {
+		label := readFileStr(filepath.Join(m, "label"))
+		if !strings.HasPrefix(label, "pinctrl-") {
 			continue
 		}
 
-		name := filepath.Base(m)
-		numStr := strings.TrimPrefix(name, "gpiochip")
-		num, err := strconv.Atoi(numStr)
+		baseStr := readFileStr(filepath.Join(m, "base"))
+		base, err := strconv.Atoi(baseStr)
 		if err != nil {
 			continue
 		}
-
-		// Pi 5: gpiochip504 maps to base 0
-		if num == 504 {
-			return 0
-		}
-		return num
+		return base
 	}
 	return 0
+}
+
+// readFileStr reads a sysfs file and returns its trimmed content.
+func readFileStr(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func gpioExport(pin int) bool {

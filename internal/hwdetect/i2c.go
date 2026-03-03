@@ -20,8 +20,8 @@ var knownI2CDevices = map[uint8]struct {
 }{
 	0x3C: {"OLED", "oled"},
 	0x3D: {"OLED (alt addr)", "oled"},
-	0x27: {"PCF8574 LCD", "lcd"},
-	0x20: {"PCF8574 LCD (alt)", "lcd"},
+	0x27: {"LCD", "lcd"},
+	0x20: {"LCD", "lcd"},
 }
 
 // OLED controller chip type, mapped to Pi-Star's OLED type numbering.
@@ -32,12 +32,15 @@ const (
 
 // DetectedI2CDevice holds information about a device found on the I2C bus.
 type DetectedI2CDevice struct {
-	Bus        int    `json:"bus"`
-	Address    string `json:"address"`    // hex, e.g. "0x3c"
-	DeviceType string `json:"deviceType"` // "oled", "lcd", "unknown"
-	Name       string `json:"name"`       // human-readable name
-	OLEDChip   string `json:"oledChip,omitempty"`   // "SSD1306" or "SH1106"
-	OLEDType   int    `json:"oledType,omitempty"`    // Pi-Star OLED type (3 or 6)
+	Bus           int    `json:"bus"`
+	Address       string `json:"address"`         // hex, e.g. "0x3c"
+	DeviceType    string `json:"deviceType"`       // "oled", "lcd", "unknown"
+	Name          string `json:"name"`             // human-readable name
+	OLEDChip      string `json:"oledChip,omitempty"`    // "SSD1306" or "SH1106"
+	OLEDType      int    `json:"oledType,omitempty"`     // Pi-Star OLED type (3 or 6)
+	LCDController string `json:"lcdController,omitempty"` // "MCP23017" or "PCF8574"
+	LCDCols       int    `json:"lcdCols,omitempty"`       // e.g. 16
+	LCDRows       int    `json:"lcdRows,omitempty"`       // e.g. 2
 }
 
 // DetectI2C scans I2C buses for known devices.
@@ -86,6 +89,11 @@ func scanI2CBus(busPath string, busNum int) []DetectedI2CDevice {
 				dev.DeviceType = known.deviceType
 			}
 
+			// For LCD devices, distinguish MCP23017 (Adafruit plate) from PCF8574
+			if dev.DeviceType == "lcd" {
+				identifyLCDController(fd, &dev)
+			}
+
 			// For OLED devices, detect the controller chip
 			if dev.DeviceType == "oled" {
 				identifyOLEDChip(fd, &dev)
@@ -110,6 +118,22 @@ func probeI2CAddress(fd int, addr uint8) bool {
 	buf := make([]byte, 1)
 	_, err := unix.Read(fd, buf)
 	return err == nil
+}
+
+// identifyLCDController distinguishes MCP23017 from PCF8574 at LCD addresses.
+// The slave address must already be set on fd.
+func identifyLCDController(fd int, dev *DetectedI2CDevice) {
+	if isMCP23017(fd) {
+		dev.Name = "Adafruit LCD Plate"
+		dev.LCDController = "MCP23017"
+		dev.LCDCols = 16
+		dev.LCDRows = 2
+	} else {
+		dev.Name = "PCF8574 LCD"
+		dev.LCDController = "PCF8574"
+		dev.LCDCols = 16
+		dev.LCDRows = 2
+	}
 }
 
 // identifyOLEDChip distinguishes SSD1306 from SH1106 by reading the I2C status byte.
