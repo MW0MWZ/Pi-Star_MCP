@@ -57,8 +57,23 @@ var knownUSBDevices = map[string]struct {
 
 // DetectAll enumerates serial ports and probes each one.
 func DetectAll() []DetectedDevice {
+	// Reset GPIO-connected modems (MMDVM_HS hats, DV-Mega on GPIO)
+	// before any probing, matching pistar-findmodem.
+	resetGPIOModem()
+
 	ports := enumeratePorts()
 	devices := make([]DetectedDevice, 0, len(ports))
+
+	// DTR-reset any USB serial ports to put Arduino-based devices (DV-Mega)
+	// into a known state. The reset triggers the bootloader; by the time we
+	// finish resetting all ports and start probing, it will have timed out.
+	for _, port := range ports {
+		if strings.HasPrefix(filepath.Base(port), "ttyUSB") {
+			resetDTR(port)
+		}
+	}
+	// Let Arduino bootloaders finish (Optiboot=250ms, Mega=1000ms)
+	time.Sleep(1500 * time.Millisecond)
 
 	for _, port := range ports {
 		dev := DetectedDevice{Port: port}
@@ -68,10 +83,9 @@ func DetectAll() []DetectedDevice {
 		readUSBInfo(ttyName, &dev)
 
 		// Probe order matches pistar-findmodem: MMDVM first, then DV-Mega.
-		// MMDVM probe at 115200 also serves to configure the port and let
-		// any Arduino bootloader (on DV-Mega) time out before the DVRPTR probe.
+		// MMDVM tries 115200, 230400, 460800. DV-Mega uses 115200 only.
 
-		// 1. MMDVM modem (most common)
+		// 1. MMDVM modem (most common, tries 3 baud rates)
 		t0 := time.Now()
 		mmdvm, err := ProbeMMDVM(port)
 		slog.Debug("probe timing", "port", port, "probe", "mmdvm", "elapsed", time.Since(t0).Round(time.Millisecond))
@@ -87,7 +101,7 @@ func DetectAll() []DetectedDevice {
 			continue
 		}
 
-		// 2. DV-Mega GMSK modem (DVRPTR protocol)
+		// 2. DV-Mega GMSK modem (DVRPTR protocol, 115200 only)
 		t0 = time.Now()
 		dvmega, err := ProbeDVMega(port)
 		slog.Debug("probe timing", "port", port, "probe", "dvmega", "elapsed", time.Since(t0).Round(time.Millisecond))
@@ -102,7 +116,7 @@ func DetectAll() []DetectedDevice {
 			continue
 		}
 
-		// 3. Nextion display (9600 baud — different baud rate, tried last)
+		// 3. Nextion display (tries 9 baud rates, 9600 default first)
 		t0 = time.Now()
 		nextion, err := ProbeNextion(port)
 		slog.Debug("probe timing", "port", port, "probe", "nextion", "elapsed", time.Since(t0).Round(time.Millisecond))

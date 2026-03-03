@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	nextionBaud    = unix.B9600
-	nextionTimeout = 2 * time.Second
+	nextionTimeout = 500 * time.Millisecond // short per-baud; tries 9 bauds
 )
 
 // NextionProbeResult holds parsed info from a Nextion "connect" response.
@@ -20,30 +19,37 @@ type NextionProbeResult struct {
 	Raw    string // full comok response line
 }
 
-// ProbeNextion sends the Nextion "connect" command and parses the response.
-// Returns nil (no error) if the device doesn't respond.
+// ProbeNextion sends the Nextion "connect" command at each baud rate and
+// parses the response. Returns nil (no error) if the device doesn't respond.
 func ProbeNextion(port string) (*NextionProbeResult, error) {
-	fd, err := openSerialPort(port, nextionBaud)
+	for _, baud := range nextionBaudRates {
+		result, err := probeNextionOnce(port, baud)
+		if err != nil {
+			return nil, err
+		}
+		if result != nil {
+			return result, nil
+		}
+	}
+	return nil, nil
+}
+
+func probeNextionOnce(port string, baud baudRate) (*NextionProbeResult, error) {
+	fd, err := openSerialPort(port, baud)
 	if err != nil {
 		return nil, err
 	}
 	defer unix.Close(fd)
 
 	flushSerial(fd)
-	time.Sleep(100 * time.Millisecond)
 
-	// Previous probes at 115200 may have sent garbage to a 9600-baud Nextion.
-	// The Nextion needs its input buffer flushed with multiple terminators
-	// and enough time to process/discard any queued error responses.
-	for range 5 {
-		unix.Write(fd, []byte{0xFF, 0xFF, 0xFF})
-		time.Sleep(50 * time.Millisecond)
-	}
-	time.Sleep(300 * time.Millisecond)
+	// Send terminators to flush any garbage from prior probes at different bauds
+	unix.Write(fd, []byte{0xFF, 0xFF, 0xFF})
+	time.Sleep(50 * time.Millisecond)
 
-	// Drain any error responses or echoed garbage
+	// Drain any error responses
 	drain := make([]byte, 256)
-	readGeneric(fd, drain, 500*time.Millisecond)
+	readGeneric(fd, drain, 100*time.Millisecond)
 	flushSerial(fd)
 
 	// Send "connect" command terminated by 0xFF 0xFF 0xFF

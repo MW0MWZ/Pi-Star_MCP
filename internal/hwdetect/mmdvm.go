@@ -14,8 +14,8 @@ const (
 	mmdvmFrameStart = 0xE0
 	mmdvmGetVersion = 0x00
 	mmdvmMaxFrame   = 256
-	mmdvmTimeout    = 1500 * time.Millisecond
-	mmdvmRetries    = 0 // real MMDVM responds in ~100ms; no need to retry
+	mmdvmTimeout    = 500 * time.Millisecond // short per-baud; tries 3 bauds
+
 )
 
 // MMDVMProbeResult holds the parsed response from a GET_VERSION probe.
@@ -46,11 +46,11 @@ var mmdvmHWPrefixes = []struct {
 	{"SkyBridge", "skybridge"},
 }
 
-// ProbeMMDVM opens the given serial port, sends GET_VERSION, and parses
-// the MMDVM response. Returns nil result (no error) if no response.
+// ProbeMMDVM opens the given serial port, sends GET_VERSION at each baud rate,
+// and parses the MMDVM response. Returns nil result (no error) if no response.
 func ProbeMMDVM(port string) (*MMDVMProbeResult, error) {
-	for attempt := 0; attempt <= mmdvmRetries; attempt++ {
-		result, err := probeMMDVMOnce(port)
+	for _, baud := range mmdvmBaudRates {
+		result, err := probeMMDVMOnce(port, baud)
 		if err != nil {
 			return nil, err
 		}
@@ -61,8 +61,8 @@ func ProbeMMDVM(port string) (*MMDVMProbeResult, error) {
 	return nil, nil
 }
 
-func probeMMDVMOnce(port string) (*MMDVMProbeResult, error) {
-	fd, err := openSerialPort(port, unix.B115200)
+func probeMMDVMOnce(port string, baud baudRate) (*MMDVMProbeResult, error) {
+	fd, err := openSerialPort(port, baud)
 	if err != nil {
 		return nil, err
 	}
