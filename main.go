@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	"github.com/MW0MWZ/Pi-Star_MCP/internal/config"
+	"github.com/MW0MWZ/Pi-Star_MCP/internal/hwdetect"
 	"github.com/MW0MWZ/Pi-Star_MCP/internal/server"
 	"github.com/MW0MWZ/Pi-Star_MCP/internal/tlsutil"
 )
@@ -59,22 +60,37 @@ func main() {
 	}
 	slog.Info("TLS certificates ready", "cert", cfg.TLS.CertFile, "key", cfg.TLS.KeyFile)
 
-	// Step 3: Start process supervisor (Mosquitto first, then MMDVM services)
+	// Step 3: Detect connected hardware
+	devices := hwdetect.DetectAll()
+	for _, d := range devices {
+		slog.Info("detected serial device", "port", d.Port, "type", d.DeviceType,
+			"mmdvm", d.MMDVMDescription, "dvmega", d.DVMegaFirmware, "usb", d.USBName)
+	}
+	i2cDevices := hwdetect.DetectI2C()
+	for _, d := range i2cDevices {
+		attrs := []any{"bus", d.Bus, "address", d.Address, "type", d.DeviceType, "name", d.Name}
+		if d.OLEDChip != "" {
+			attrs = append(attrs, "chip", d.OLEDChip, "oledType", d.OLEDType)
+		}
+		slog.Info("detected i2c device", attrs...)
+	}
+
+	// Step 4: Start process supervisor (Mosquitto first, then MMDVM services)
 	// TODO: supervisor.Start(ctx, cfg)
 	slog.Info("TODO: start process supervisor")
 
-	// Step 4: Connect MQTT client
+	// Step 5: Connect MQTT client
 	// TODO: mqttclient.Connect(ctx, cfg.MQTT)
 	slog.Info("TODO: connect MQTT client")
 
-	// Step 5: Discover modules
+	// Step 6: Discover modules
 	// TODO: modules.Discover(cfg.Dashboard.ModulesDir)
 	slog.Info("TODO: discover modules")
 
-	// Step 6: Start HTTPS server
+	// Step 7: Start HTTPS server
 	serverErr := make(chan error, 1)
 	go func() {
-		serverErr <- server.ListenAndServe(ctx, cfg, content)
+		serverErr <- server.ListenAndServe(ctx, cfg, content, *configPath, devices, i2cDevices)
 	}()
 
 	slog.Info("startup sequence complete", "listen_https", cfg.Dashboard.ListenHTTPS, "listen_http", cfg.Dashboard.ListenHTTP)

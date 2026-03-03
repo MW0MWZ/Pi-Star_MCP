@@ -23,7 +23,7 @@ var PiStar = (function() {
 
     // i18n engine
     function loadTranslations(lang) {
-        fetch('/i18n/' + lang + '.json')
+        return fetch('/i18n/' + lang + '.json')
             .then(function(r) { return r.json(); })
             .then(function(strings) {
                 i18nStrings = strings;
@@ -45,14 +45,10 @@ var PiStar = (function() {
         return i18nStrings[key] || fallback || key;
     }
 
-    // Theme switcher
+    // Theme switcher — persists to localStorage
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        fetch('/api/preferences', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ theme: theme })
-        });
+        try { localStorage.setItem('pistar-theme', theme); } catch (e) {}
     }
 
     // Navigation toggle (mobile)
@@ -73,19 +69,41 @@ var PiStar = (function() {
         initNav();
         connectWebSocket();
 
+        // Restore theme from localStorage and sync picker
+        var savedTheme = null;
+        try { savedTheme = localStorage.getItem('pistar-theme'); } catch (e) {}
+        if (savedTheme) {
+            setTheme(savedTheme);
+        }
         var themePicker = document.getElementById('theme-picker');
         if (themePicker) {
+            if (savedTheme) {
+                themePicker.value = savedTheme;
+            }
             themePicker.addEventListener('change', function() {
                 setTheme(this.value);
             });
         }
 
+        // Restore language from localStorage, auto-load translations
+        var savedLang = null;
+        try { savedLang = localStorage.getItem('pistar-lang'); } catch (e) {}
+        var lang = savedLang || 'en';
+
         var langPicker = document.getElementById('lang-picker');
         if (langPicker) {
+            if (savedLang) {
+                langPicker.value = savedLang;
+            }
             langPicker.addEventListener('change', function() {
-                loadTranslations(this.value);
+                var newLang = this.value;
+                try { localStorage.setItem('pistar-lang', newLang); } catch (e) {}
+                loadTranslations(newLang);
             });
         }
+
+        // Always load translations on init
+        loadTranslations(lang);
     }
 
     if (document.readyState === 'loading') {
@@ -94,7 +112,7 @@ var PiStar = (function() {
         init();
     }
 
-    return { i18n: i18n, setTheme: setTheme };
+    return { i18n: i18n, setTheme: setTheme, loadTranslations: loadTranslations };
 })();
 
 // Global i18n helper for modules

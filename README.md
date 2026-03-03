@@ -204,7 +204,7 @@ nxdngateway_enabled=0
 # mmdvmhost_config=/etc/mmdvmhost/MMDVM.ini
 ```
 
-**Supported services:** mmdvmhost, dmrgateway, ysfgateway, p25gateway, nxdngateway, dstargateway, ircddbgateway, fmgateway, aprsgateway, dapnetgateway, dmr2ysf, dmr2nxdn, ysf2dmr, ysf2nxdn, ysf2p25, nxdn2dmr, ysfparrot, p25parrot, nxdnparrot, dstarrepeater, dgidgateway, starnetserver
+**Supported services:** mmdvmhost, dmrgateway, ysfgateway, p25gateway, nxdngateway, dstargateway, fmgateway, aprsgateway, dapnetgateway, dmr2ysf, dmr2nxdn, ysf2dmr, ysf2nxdn, ysf2p25, nxdn2dmr, ysfparrot, p25parrot, nxdnparrot, dstarrepeater, dgidgateway
 
 ## Project Structure
 
@@ -213,18 +213,19 @@ Pi-Star_MCP/
 ├── main.go                          # Entry point, CLI flags, startup orchestration
 ├── internal/
 │   ├── config/                      # INI config loading, service registry, dependency management
+│   ├── svcconfig/                   # Schema-driven service settings (read/write/validate)
 │   ├── tlsutil/                     # Self-signed certificate generation
 │   ├── auth/                        # /etc/shadow auth, sessions, CSRF, API tokens
 │   ├── supervisor/                  # Child process lifecycle, Mosquitto management
-│   ├── server/                      # HTTPS server, middleware, routes
+│   ├── server/                      # HTTPS server, middleware (security headers, auth), routes
 │   │   └── handlers/               # API and page request handlers
 │   ├── mqttclient/                  # MQTT connection and WebSocket relay
 │   ├── wshub/                       # WebSocket hub, connection registry, broadcast
 │   ├── modules/                     # Module discovery and manifest parsing
 │   └── system/                      # CPU temp, load, uptime, memory
 ├── web/
-│   ├── templates/                   # HTML shell and login page
-│   └── static/                      # CSS, JavaScript
+│   ├── templates/                   # HTML: shell (public), login, admin
+│   └── static/                      # CSS (base, components, admin), JS (pistar, validate, configurator)
 ├── modules/
 │   ├── core/                        # System info panel + themes + i18n
 │   └── lastHeard/                   # RF/network activity table
@@ -286,37 +287,41 @@ Six pre-defined themes, each with light and dark variants:
 
 All colours are CSS custom properties (`--ps-bg-primary`, `--ps-accent`, `--ps-danger`, etc.). Theme files live in `modules/core/themes/`.
 
-## API
+## Route Structure
 
-### Configuration
+The dashboard has two sections: a **public dashboard** (no login required) and an **admin panel** (session cookie required).
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/config/{service}` | Read service config |
-| PUT | `/api/config/{service}` | Write service config |
+### Public Routes
 
-### System
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Dashboard shell (system info + last heard) |
+| GET | `/login` | Login page |
+| POST | `/login` | Authenticate (sets session cookie) |
+| POST | `/logout` | Clear session, redirect to `/` |
+| GET | `/static/*`, `/modules/*`, `/i18n/*` | Embedded static assets |
+
+### Admin Routes (require authentication)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/admin` | Admin SPA shell (service configurator) |
+| GET | `/admin/api/services` | List all 22 services with status |
+| PUT | `/admin/api/services/{svc}/enable` | Enable a service |
+| PUT | `/admin/api/services/{svc}/disable` | Disable a service |
+| GET | `/admin/api/services/{svc}/settings` | Read settings schema + values |
+| PUT | `/admin/api/services/{svc}/settings` | Write curated settings |
+| POST | `/admin/api/system/reboot` | Placeholder (501) |
+| POST | `/admin/api/system/shutdown` | Placeholder (501) |
+| POST | `/admin/api/system/update` | Placeholder (501) |
+
+### Other API (stubs)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/system/info` | CPU, memory, temp, uptime |
-| GET | `/api/system/services` | All managed service statuses |
-| POST | `/api/system/services/{svc}` | Start / stop / restart a service |
-
-### Tokens
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tokens` | List API tokens |
-| POST | `/api/tokens` | Create a new token |
-| DELETE | `/api/tokens/{id}` | Revoke a token |
-
-### Preferences
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/preferences` | Get user preferences |
-| PUT | `/api/preferences` | Update preferences (theme, language) |
+| GET/PUT | `/api/preferences` | User theme/language preferences |
+| GET/POST/DELETE | `/api/tokens` | API bearer tokens |
 
 ### WebSocket
 
@@ -325,6 +330,27 @@ wss://pistar.local/ws
 ```
 
 Receives real-time MQTT messages and system status updates as JSON.
+
+## Service Configurator
+
+The admin panel includes a **schema-driven service configurator**. Each service's editable settings are defined as Go structs — the frontend renders forms dynamically from the schema. Only curated fields are exposed; hand-edited comments and non-exposed settings in INI files are preserved.
+
+### Currently Supported Services
+
+| Service | Settings |
+|---------|----------|
+| MMDVMHost | Callsign, DMR ID, frequencies, location, mode enables, colour code, D-Star module |
+| DMRGateway | Repeater address/port, DMR Network 1 (enabled, name, address, port, password) |
+| YSFGateway | Callsign, suffix, startup reflector, inactivity timeout |
+
+### Adding Settings for a New Service
+
+1. Create `internal/svcconfig/newservice.go`
+2. Define a `SettingsSchema` with groups and fields
+3. Register it in `SchemaRegistry` via `init()`
+4. Add i18n keys to `i18n/en.json`
+
+The frontend adapts automatically — no HTML or JS changes needed.
 
 ## Platform Support
 

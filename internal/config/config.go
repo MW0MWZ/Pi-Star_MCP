@@ -62,6 +62,7 @@ type ServiceEntry struct {
 	Enabled    bool
 	BinaryPath string
 	ConfigPath string
+	HWType     string // DStarRepeater only: hardware variant key (e.g. "dvap", "gmsk")
 }
 
 // Load reads an INI config file and returns a Config with defaults
@@ -209,6 +210,17 @@ func loadServices(f *ini.File, cfg *Config) {
 		entry := cfg.Services[name]
 		loadServiceEntry(s, name, entry)
 	}
+
+	// Resolve DStarRepeater variant paths from hwtype.
+	if entry := cfg.Services["dstarrepeater"]; entry != nil {
+		if v := s.Key("dstarrepeater_hwtype").String(); v != "" {
+			entry.HWType = v
+		}
+		if entry.HWType == "" {
+			entry.HWType = DStarVariants[0].Key
+		}
+		ResolveDStarPaths(entry)
+	}
 }
 
 func loadServiceEntry(s *ini.Section, prefix string, entry *ServiceEntry) {
@@ -274,6 +286,11 @@ func SaveServices(path string, services map[string]*ServiceEntry) error {
 			s.Key(name + "_enabled").SetValue("1")
 		}
 
+		// DStarRepeater paths are resolved from hwtype, not stored directly.
+		if name == "dstarrepeater" {
+			continue
+		}
+
 		if entry.BinaryPath != def.DefaultBinaryPath {
 			s.Key(name + "_path").SetValue(entry.BinaryPath)
 		}
@@ -282,7 +299,20 @@ func SaveServices(path string, services map[string]*ServiceEntry) error {
 		}
 	}
 
+	// Write DStarRepeater hardware type.
+	if entry, ok := services["dstarrepeater"]; ok && entry.HWType != "" {
+		s.Key("dstarrepeater_hwtype").SetValue(entry.HWType)
+	}
+
 	return f.SaveTo(path)
+}
+
+// ResolveDStarPaths updates a DStarRepeater ServiceEntry's BinaryPath
+// and ConfigPath based on the selected hardware variant (HWType).
+func ResolveDStarPaths(entry *ServiceEntry) {
+	variant := LookupDStarVariant(entry.HWType)
+	entry.BinaryPath = "/usr/bin/" + variant.BinaryName
+	entry.ConfigPath = "/etc/dstarrepeater/" + variant.ConfigFile
 }
 
 // validate checks that configuration values are within acceptable ranges.

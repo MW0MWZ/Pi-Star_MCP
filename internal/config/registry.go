@@ -12,7 +12,7 @@ const (
 	CategoryUtility
 )
 
-// ArgStyle describes how a service binary receives its config path.
+// ArgStyle describes how a service binary receives its arguments.
 type ArgStyle int
 
 const (
@@ -20,6 +20,8 @@ const (
 	ArgPositional ArgStyle = iota
 	// ArgFlag: binary -config configpath  (e.g. dstargateway -config /etc/...)
 	ArgFlag
+	// ArgPort: binary port  (e.g. YSFParrot 4001) — no config file
+	ArgPort
 )
 
 // ServiceDef is a compile-time definition of a managed service.
@@ -28,7 +30,8 @@ type ServiceDef struct {
 	DisplayName       string
 	Category          ServiceCategory
 	DefaultBinaryPath string
-	DefaultConfigPath string
+	DefaultConfigPath string // empty for ArgPort services
+	DefaultArgs       string // for ArgPort services: default port number
 	ConfigArgStyle    ArgStyle
 	DependsOn         []string // service names that must be running first
 	DefaultEnabled    bool
@@ -86,14 +89,6 @@ var Registry = map[string]ServiceDef{
 		Category:          CategoryGateway,
 		DefaultBinaryPath: "/usr/local/bin/dstargateway",
 		DefaultConfigPath: "/etc/dstarclients/dstargateway.cfg",
-		ConfigArgStyle:    ArgFlag,
-	},
-	"ircddbgateway": {
-		Name:              "ircddbgateway",
-		DisplayName:       "ircddbgatewayd",
-		Category:          CategoryGateway,
-		DefaultBinaryPath: "/usr/local/bin/ircddbgatewayd",
-		DefaultConfigPath: "/etc/dstarclients/ircddbgateway.conf",
 		ConfigArgStyle:    ArgFlag,
 	},
 	"fmgateway": {
@@ -183,30 +178,30 @@ var Registry = map[string]ServiceDef{
 		DisplayName:       "YSFParrot",
 		Category:          CategoryUtility,
 		DefaultBinaryPath: "/usr/local/bin/YSFParrot",
-		DefaultConfigPath: "/etc/ysfclients/YSFParrot.ini",
-		ConfigArgStyle:    ArgPositional,
+		DefaultArgs:       "42014",
+		ConfigArgStyle:    ArgPort,
 	},
 	"p25parrot": {
 		Name:              "p25parrot",
 		DisplayName:       "P25Parrot",
 		Category:          CategoryUtility,
 		DefaultBinaryPath: "/usr/local/bin/P25Parrot",
-		DefaultConfigPath: "/etc/p25clients/P25Parrot.ini",
-		ConfigArgStyle:    ArgPositional,
+		DefaultArgs:       "42015",
+		ConfigArgStyle:    ArgPort,
 	},
 	"nxdnparrot": {
 		Name:              "nxdnparrot",
 		DisplayName:       "NXDNParrot",
 		Category:          CategoryUtility,
 		DefaultBinaryPath: "/usr/local/bin/NXDNParrot",
-		DefaultConfigPath: "/etc/nxdnclients/NXDNParrot.ini",
-		ConfigArgStyle:    ArgPositional,
+		DefaultArgs:       "42016",
+		ConfigArgStyle:    ArgPort,
 	},
 	"dstarrepeater": {
 		Name:              "dstarrepeater",
-		DisplayName:       "dstarrepeaterd",
-		Category:          CategoryUtility,
-		DefaultBinaryPath: "/usr/local/bin/dstarrepeaterd",
+		DisplayName:       "DStarRepeater",
+		Category:          CategoryCore,
+		DefaultBinaryPath: "/usr/bin/dstarrepeaterd",
 		DefaultConfigPath: "/etc/dstarrepeater/dstarrepeater.conf",
 		ConfigArgStyle:    ArgFlag,
 	},
@@ -218,15 +213,37 @@ var Registry = map[string]ServiceDef{
 		DefaultConfigPath: "/etc/ysfclients/DGIdGateway.ini",
 		ConfigArgStyle:    ArgPositional,
 	},
-	"starnetserver": {
-		Name:              "starnetserver",
-		DisplayName:       "starnetserverd",
-		Category:          CategoryUtility,
-		DefaultBinaryPath: "/usr/local/bin/starnetserverd",
-		DefaultConfigPath: "/etc/dstarclients/starnetserver.conf",
-		ConfigArgStyle:    ArgFlag,
-		DependsOn:         []string{"ircddbgateway"},
-	},
+}
+
+// DStarVariant maps a DStarRepeater hardware type to its binary and
+// config file. Each hardware type requires a different daemon binary.
+type DStarVariant struct {
+	Key         string // stored in dashboard.ini
+	DisplayName string
+	BinaryName  string // filename in /usr/bin/ (e.g. "dstarrepeaterd")
+	ConfigFile  string // filename in /etc/dstarrepeater/ (e.g. "dstarrepeater.conf")
+}
+
+// DStarVariants lists all supported DStarRepeater hardware types.
+// The first entry is the default.
+var DStarVariants = []DStarVariant{
+	{Key: "icom", DisplayName: "Icom Repeater (ID-RP2C)", BinaryName: "dstarrepeaterd", ConfigFile: "dstarrepeater.conf"},
+	{Key: "dvmega", DisplayName: "DV-Mega", BinaryName: "dstarrepeaterd", ConfigFile: "dstarrepeater.conf"},
+	{Key: "gmsk", DisplayName: "GMSK Modem", BinaryName: "gmskrepeaterd", ConfigFile: "gmskrepeater.conf"},
+	{Key: "dvrptr1", DisplayName: "DV-RPTR V1", BinaryName: "dvrptrrepeaterd", ConfigFile: "dvrptrrepeater.conf"},
+	{Key: "dvrptr3", DisplayName: "DV-RPTR V3", BinaryName: "dvrptrrepeaterd", ConfigFile: "dvrptrrepeater.conf"},
+	{Key: "dvap", DisplayName: "DVAP", BinaryName: "dvapnoded", ConfigFile: "dvapnode.conf"},
+}
+
+// LookupDStarVariant returns the variant for a hardware type key.
+// Returns the default (first) variant if the key is unknown.
+func LookupDStarVariant(key string) DStarVariant {
+	for _, v := range DStarVariants {
+		if v.Key == key {
+			return v
+		}
+	}
+	return DStarVariants[0]
 }
 
 // LookupService returns the definition for a named service.

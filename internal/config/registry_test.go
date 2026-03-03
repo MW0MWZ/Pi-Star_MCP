@@ -39,7 +39,11 @@ func TestRegistryNoEmptyFields(t *testing.T) {
 		if def.DefaultBinaryPath == "" {
 			t.Errorf("service %q has empty DefaultBinaryPath", name)
 		}
-		if def.DefaultConfigPath == "" {
+		if def.ConfigArgStyle == ArgPort {
+			if def.DefaultArgs == "" {
+				t.Errorf("service %q has ArgPort style but empty DefaultArgs", name)
+			}
+		} else if def.DefaultConfigPath == "" {
 			t.Errorf("service %q has empty DefaultConfigPath", name)
 		}
 	}

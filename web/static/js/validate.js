@@ -10,7 +10,7 @@ var Validate = (function() {
             return /^\d+$/.test(value);
         },
         decimal: function(value) {
-            return /^\d+(\.\d+)?$/.test(value);
+            return /^-?\d+(\.\d+)?$/.test(value);
         },
         callsign: function(value) {
             return /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,4}$/i.test(value);

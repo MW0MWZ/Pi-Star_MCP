@@ -6,6 +6,30 @@
     <title data-i18n="login.title">Pi-Star - Log In</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="/modules/core/themes/default-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/default-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/classic-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/classic-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/emerald-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/emerald-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/high-contrast-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/high-contrast-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/ocean-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/ocean-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/sunset-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/sunset-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/slate-light.css">
+    <link rel="stylesheet" href="/modules/core/themes/slate-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/night-ops-dark.css">
+    <link rel="stylesheet" href="/modules/core/themes/midnight-dark.css">
+    <script>
+        (function() {
+            var theme;
+            try { theme = localStorage.getItem('pistar-theme'); } catch (e) {}
+            document.documentElement.setAttribute('data-theme', theme || 'default-light');
+        })();
+    </script>
 </head>
 <body class="login-page">
     <main role="main" class="login-container">

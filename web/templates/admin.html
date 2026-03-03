@@ -3,9 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title data-i18n="nav.title">Pi-Star Dashboard</title>
+    <title data-i18n="admin.title">Pi-Star Admin</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
     <!-- Theme CSS — all loaded, active one selected via data-theme attribute -->
     <link rel="stylesheet" href="/modules/core/themes/default-light.css">
     <link rel="stylesheet" href="/modules/core/themes/default-dark.css">
@@ -40,8 +41,8 @@
                 <span class="nav-toggle-icon"></span>
             </button>
             <ul id="nav-menu" role="menubar">
-                <!-- Module navigation items injected server-side -->
-                <li role="none"><a role="menuitem" href="/admin" data-i18n="nav.admin">Admin</a></li>
+                <li role="none"><a role="menuitem" href="/" data-i18n="nav.dashboard">Dashboard</a></li>
+                <li role="none"><a role="menuitem" href="/admin" aria-current="page" data-i18n="nav.admin">Admin</a></li>
             </ul>
             <div class="nav-actions">
                 <select id="theme-picker" aria-label="Theme">
@@ -78,9 +79,6 @@
                         <option value="midnight-dark">Midnight</option>
                     </optgroup>
                 </select>
-                <select id="lang-picker" aria-label="Language">
-                    <option value="en">English</option>
-                </select>
                 <form method="post" action="/logout" class="nav-logout-form">
                     <button type="submit" class="nav-logout-btn" aria-label="Log Out" title="Log Out">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -94,10 +92,42 @@
         </nav>
     </header>
 
-    <main role="main" id="dashboard">
-        <!-- Panel modules injected server-side as <section> elements -->
-        <div aria-live="polite" id="status-region" class="sr-only"></div>
-    </main>
+    <div class="admin-layout">
+        <aside class="admin-sidebar" role="navigation" aria-label="Admin navigation">
+            <ul>
+                <li><a href="#radio" class="sidebar-link active" data-i18n="admin.nav.radio">Radio</a></li>
+                <li><a href="#configuration" class="sidebar-link" data-i18n="admin.nav.configuration">Configuration</a></li>
+            </ul>
+        </aside>
+
+        <main role="main" id="admin-content">
+            <section id="page-radio" class="admin-page">
+                <h1 data-i18n="radio.title">Radio Configuration</h1>
+                <div id="radio-content" class="radio-settings-panel card">
+                    <p class="loading" data-i18n="radio.loading">Loading radio settings...</p>
+                </div>
+            </section>
+
+            <section id="page-configuration" class="admin-page" style="display: none;">
+                <h1 data-i18n="admin.config.title">Service Configuration</h1>
+                <div class="config-layout">
+                    <div class="service-list-panel card">
+                        <h2 data-i18n="admin.config.services">Services</h2>
+                        <div id="service-list" aria-label="Service list">
+                            <p class="loading" data-i18n="admin.config.loading">Loading services...</p>
+                        </div>
+                    </div>
+                    <div class="settings-panel card">
+                        <div id="settings-content">
+                            <p class="placeholder-text" data-i18n="admin.config.selectService">Select a service to view its settings</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div aria-live="polite" id="admin-status" class="sr-only"></div>
+        </main>
+    </div>
 
     <footer role="contentinfo">
         <p>Pi-Star v5</p>
@@ -105,5 +135,7 @@
 
     <script src="/static/js/pistar.js"></script>
     <script src="/static/js/validate.js"></script>
+    <script src="/static/js/radio.js"></script>
+    <script src="/static/js/configurator.js"></script>
 </body>
 </html>

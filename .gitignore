@@ -6,3 +6,6 @@
 # Dev files
 /dev.ini
 /dev-certs/
+
+# Test container artifacts
+/test/docker/pistar-dashboard-linux-arm64

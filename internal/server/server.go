@@ -14,13 +14,14 @@ import (
 	"time"
 
 	"github.com/MW0MWZ/Pi-Star_MCP/internal/config"
+	"github.com/MW0MWZ/Pi-Star_MCP/internal/hwdetect"
 )
 
 // ListenAndServe starts the HTTPS dashboard server and an HTTP redirect
 // server. It blocks until ctx is cancelled, then gracefully shuts down
 // both servers with a 10-second deadline.
-func ListenAndServe(ctx context.Context, cfg *config.Config, content embed.FS) error {
-	router := NewRouter(content)
+func ListenAndServe(ctx context.Context, cfg *config.Config, content embed.FS, configPath string, devices []hwdetect.DetectedDevice, i2cDevices []hwdetect.DetectedI2CDevice) error {
+	router := NewRouter(content, cfg, configPath, devices, i2cDevices)
 
 	tlsCfg := &tls.Config{
 		MinVersion:       parseTLSVersion(cfg.TLS.MinVersion),
