@@ -58,9 +58,6 @@ var knownUSBDevices = map[string]struct {
 
 // DetectAll enumerates serial ports and probes each one.
 func DetectAll() []DetectedDevice {
-	// Ensure USB serial drivers are loaded (Alpine/mdev doesn't autoload)
-	loadUSBDrivers()
-
 	// Reset GPIO-connected modems (MMDVM_HS hats, DV-Mega on GPIO)
 	// before any probing, matching pistar-findmodem.
 	resetGPIOModem()
